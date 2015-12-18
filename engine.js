@@ -103,8 +103,8 @@ nrGsr = (function ()  {
       result['_wins_' +  r.winnerName] = result['_wins_' +  r.winnerName] + 1;
       result.nrOfGames = result.nrOfGames + 1;
       result.nrOfRounds = result.nrOfRounds + r.nrOfRounds;
-      if(result.invalidStrategyName) {
-        result['_invalid_' + result.invalidStrategyName] = true;
+      if(r.invalidStrategyName) {
+        result['_invalid_' + r.invalidStrategyName] = true;
       }
     }
     return result;

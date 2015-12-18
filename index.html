@@ -2,7 +2,55 @@
 <html>
   <head>
     <title>NrGsr</title>
+	
+	 <script src="js/angular.min.1-4-1.js"></script>
+   <script src="engine.js"></script>
+   <script>
+    var app = angular.module('app', []);
+    app.controller('ctr', function ($scope) {
+      $scope.strategyName1 = 'n1';
+      $scope.strategyName2 = 'n2';
+      
+      $scope.findBest = function () {
+        var s1 = nrGsr.createStrategyString({ name : $scope.strategyName1, f: $scope.code1 });
+        var s2 = nrGsr.createStrategyString({ name : $scope.strategyName2, f: $scope.code2 });
+        
+        $scope.result = JSON.stringify(nrGsr.findBestStrategy(s1, s2));        
+      }
+      
+      $scope.showSingleGame = function () {
+        var s1 = nrGsr.createStrategyString({ name : $scope.strategyName1, f: $scope.code1 });
+        var s2 = nrGsr.createStrategyString({ name : $scope.strategyName2, f: $scope.code2 });
+        
+        var result = nrGsr.simulateGame(s1, s2, { logEnabled : true });
+        var r = '';
+        for(var i=0; i<result.log.length; i++) {
+          r = r + result.log[i] + '\n';
+        }
+        $scope.result = r;                
+      }
+    });     
+   </script>
   </head>
-  <body>
+  <body ng-app="app">
+	 <div ng-controller="ctr">
+     <table>
+      <tr>
+        <td><input placeholder="name 1" ng-model="strategyName1"></td>
+        <td><input placeholder="name 2" ng-model="strategyName2"></td>
+      </tr>
+      <tr>
+        <td><textarea rows="25" cols="70" placeholder="return 42;//g is an array of ints with guesses" ng-model="code1"></textarea></td>
+        <td><textarea rows="25" cols="70" placeholder="return 42;//g is an array of ints with guesses" ng-model="code2"></textarea></td>
+      </tr>
+      <tr>
+        <td><button ng-click="findBest()">Find best</button></td>
+        <td><button ng-click="showSingleGame()">Show single game</button></td>
+      </tr>
+      <tr>
+        <td colspan="2"><textarea rows="25" cols="140" ng-model="result"></textarea> </td>
+      </tr>            
+     </table>
+	 </div>
   </body>
 </html>
