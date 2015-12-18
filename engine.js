@@ -62,16 +62,15 @@ nrGsr = (function ()  {
         }
         game.nrOfRounds = round + 1;
         game.winnerName = other.name;
-        game.isInvalidGuessWin = true;
+        game.invalidStrategyName = current.name;
         return game;
       } else if(guess === correctNr) {
         if(logEnabled) {
           game.log.push(current.name + ': ' + guess);
           game.log.push('--' + current.name + ' wins--');
         }
-        game.nrOfRounds = round + 1;      
+        game.nrOfRounds = round + 1;
         game.winnerName = current.name;
-        game.isInvalidGuessWin = false;     
         return game;
       } else {
         guesses.push(guess);
@@ -83,8 +82,37 @@ nrGsr = (function ()  {
     }  
     throw 'game engine broke. no winner after all rounds.'
   }
+  
+  var findBestStrategy = function(strategy1, strategy2, options) {
+    var result = {
+      nrOfGames : 0,
+      nrOfRounds : 0
+    }
+    var s1 = parseStrategyString(strategy1);
+    var s2 = parseStrategyString(strategy2);
+    
+    result['_wins_' + s1.name] = 0;
+    result['_wins_' + s2.name] = 0;
+    for(var i=0; i<1000; i++) {
+      var r;
+      if(i % 2 === 0) {
+        r = simulateGame(strategy1, strategy2, options);
+      } else {
+        r = simulateGame(strategy2, strategy1, options);
+      }
+      result['_wins_' +  r.winnerName] = result['_wins_' +  r.winnerName] + 1;
+      result.nrOfGames = result.nrOfGames + 1;
+      result.nrOfRounds = result.nrOfRounds + r.nrOfRounds;
+      if(result.invalidStrategyName) {
+        result['_invalid_' + result.invalidStrategyName] = true;
+      }
+    }
+    return result;
+  };
+  
   return {  simulateGame : simulateGame, 
             createStrategyString : createStrategyString, 
-            parseStrategyString : parseStrategyString 
+            parseStrategyString : parseStrategyString,
+            findBestStrategy : findBestStrategy
   };
 })();
