@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NrGsr</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.js"></script>
+
+    <script src="js/ui-bootstrap-tpls-0.14.3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.2/ace.js"></script>
+    <script src="engine.js"></script>
+    
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #e1 {height : 100px; width:100px;}
+    </style>
+   <script>
+    var app = angular.module('app', ['ui.bootstrap', 'ngAnimate']);
+    app.controller('ctr', function ($scope, $window) {
+        //TODO: Make the editor work with the tabs so the fake tabs hack isnt needed
+        $scope.strats = [
+            { title:'Strategy 1', content:'return 1;', active : true },
+            { title:'Strategy 2', content:'return 2;' }
+        ];
+
+        $scope.tabNr = 1;
+        
+        $scope.onSelectTab = function(tabNr) {
+            var previousTabNr = $scope.tabNr; 
+            $scope.tabNr = tabNr;
+            
+            if(previousTabNr <= 2){
+               $scope.strats[previousTabNr-1].content = editor.getValue()
+            }
+            
+            if(tabNr === 1 || tabNr === 2) {
+                editor.setValue($scope.strats[$scope.tabNr-1].content)
+            }
+        }
+        
+        $scope.fight = function () {
+            $scope.result = {
+                log :["Player 1: 100", "Player 2: 93", "--Player 1: Wins"]
+            }
+        }
+        
+        setTimeout(function() {
+            editor = ace.edit("editor");
+            editor.setTheme("ace/theme/monokai");
+            editor.getSession().setMode("ace/mode/javascript");
+            editor.setValue($scope.strats[$scope.tabNr-1].content)
+        });
+    });
+   </script>
+  </head>
+  <body ng-app="app">
+	 <div ng-controller="ctr" class="container">
+        <uib-tabset>            
+            <uib-tab select="onSelectTab(1)" heading="{{strats[0].title}}" active="strats[0].active" disable="strats[0].disabled"></uib-tab>
+            <uib-tab select="onSelectTab(2)" heading="{{strats[1].title}}" active="strats[1].active" disable="strats[1].disabled"></uib-tab>
+            <uib-tab select="onSelectTab(3)" heading="Fight!">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <h2>Find the best strategy</h2>
+                        <p>Click 'fight!' to simluate 10000 matches between the two strategies and find out which one is the best.</p>
+                        <p><a class="btn btn-primary" href="#" role="button" ng-click="fight()">Fight!</a></p>
+                        <table class="table" ng-show="result">
+                            <tbody>
+                                <tr ng-repeat="r in result.log">
+                                    <td>{{r}}</td>
+                                </tr>
+                            </tbody>                            
+                        </table>
+                    </div>
+                </div>                
+            </uib-tab>
+        </uib-tabset>
+        <div style="margin-top:10px;width:700px;height:500px;" id="editor" ng-hide="tabNr>2"></div>
+	 </div>
+  </body>
+</html>

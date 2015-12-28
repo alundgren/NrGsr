@@ -67,26 +67,21 @@ nrGsr = (function ()  {
   var findBestStrategy = function(strategy1, strategy2, options) {
     var result = {
       nrOfGames : 0,
-      nrOfRounds : 0
+      nrOfRounds : 0,
+      wins : [0, 0, 0] //draws, p1, p2
     }
-    var s1 = parseStrategyString(strategy1);
-    var s2 = parseStrategyString(strategy2);
-    
-    result['_wins_' + s1.name] = 0;
-    result['_wins_' + s2.name] = 0;
-    for(var i=0; i<1000; i++) {
+
+    for(var i=0; i<10000; i++) {
       var r;
       if(i % 2 === 0) {
         r = simulateGame(strategy1, strategy2, options);
+        result.wins[r.winner] = result.wins[r.winner] + 1;
       } else {
         r = simulateGame(strategy2, strategy1, options);
+        result.wins[3-r.winner] = result.wins[3-r.winner] + 1;
       }
-      result['_wins_' +  r.winnerName] = result['_wins_' +  r.winnerName] + 1;
       result.nrOfGames = result.nrOfGames + 1;
       result.nrOfRounds = result.nrOfRounds + r.nrOfRounds;
-      if(r.invalidStrategyName) {
-        result['_invalid_' + r.invalidStrategyName] = true;
-      }
     }
     return result;
   };
