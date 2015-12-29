@@ -4,10 +4,13 @@ nrGsr = (function ()  {
   }
   var parseStrategyString = function (s) {
     var c = atob(s);
-    return Function('g', 'r', 'm', c); 
+    return Function('m', c); 
   }
-  var  simulateGame = function (strategy1, strategy2, options) {  
-    var strats = [{ f : strategy1, m : {}, name : 'player 1', nr : 1 }, { f : strategy2, m : {}, name : 'player 2', nr : 2 }];
+  
+  //TODO: Missing intel. Opponents last guess
+  
+  var  simulateGame = function (c1, c2, options) {  
+    var strats = [c1, c2]; //{ f : <fn>, m : {}, name : 'player 1', nr : 1 }
     options = options || {}
     options.n = options.n || 1000;
     options.maxNrOfRounds = options.maxNrOfRounds || 10000; //NOTE: If both players strategy even does the bare minimum of not guessing already known wrong answers this caps out at n.
@@ -23,12 +26,11 @@ nrGsr = (function ()  {
     }
     
     if(logEnabled) {
-      game.log = [];
+      game.log = ['correct nr: ' + correctNr];
     }
     
     game.nrOfRounds = 1;
-    var lastGuess = null;
-    var lastResult = 0;
+    var guesses = [[], []];
     while(game.nrOfRounds <= options.maxNrOfRounds) {
       var guess;
       var current;
@@ -36,8 +38,13 @@ nrGsr = (function ()  {
       
       current = strats[1-(game.nrOfRounds%2)];
       other = strats[game.nrOfRounds%2];
-  
-      guess = current.f(lastGuess, lastResult, current.m);
+      var currentGuesses = guesses[1-(game.nrOfRounds%2)];
+      var otherGuesses = guesses[game.nrOfRounds%2];
+        
+      current.m.yourGuesses = currentGuesses;
+      current.m.opponentsGuesses = otherGuesses;
+      
+      guess = current.f(current.m);
       
       if(guess === correctNr) {
         if(logEnabled) {
@@ -47,12 +54,12 @@ nrGsr = (function ()  {
         game.winner = current.nr;
         return game;
       } else {
-        lastGuess = guess;
         if(guess < correctNr) {
-          lastResult = 1;
+            currentGuesses.push({ g : guess, r : 1 })
         } else {
-          lastResult = -1;
+            currentGuesses.push({ g : guess, r : -1 })
         }
+        
         if(logEnabled) {
           game.log.push(current.name + ': ' + guess);
         }
@@ -62,6 +69,7 @@ nrGsr = (function ()  {
     if(logEnabled) {
       game.log.push('-- no winner. max nr of rounds hit --');
     }
+    return game;
   }
   
   var findBestStrategy = function(strategy1, strategy2, options) {
@@ -71,15 +79,18 @@ nrGsr = (function ()  {
       wins : [0, 0, 0] //draws, p1, p2
     }
 
+    var r;
+    var c1;
+    var c2;
     for(var i=0; i<10000; i++) {
-      var r;
+      c1 = { f : strategy1, m : {}, name : 'player 1', nr : 1 }
+      c2 = { f : strategy2, m : {}, name : 'player 2', nr : 2 }
       if(i % 2 === 0) {
-        r = simulateGame(strategy1, strategy2, options);
-        result.wins[r.winner] = result.wins[r.winner] + 1;
+        r = simulateGame(c1, c2, options);
       } else {
-        r = simulateGame(strategy2, strategy1, options);
-        result.wins[3-r.winner] = result.wins[3-r.winner] + 1;
+        r = simulateGame(c2, c1, options);
       }
+      result.wins[r.winner] = result.wins[r.winner] + 1;      
       result.nrOfGames = result.nrOfGames + 1;
       result.nrOfRounds = result.nrOfRounds + r.nrOfRounds;
     }

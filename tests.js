@@ -9,7 +9,7 @@ QUnit.test("s1 begins the game", function( assert ) {
     logEnabled : true,
     n : 1000
   }
-  var game = nrGsr.simulateGame(s, s, options);
+  var game = nrGsr.simulateGame({ f : s, nr : 1, name : 'one', m : {} }, { f : s, nr : 1, name : 'one', m : {} }, options);
   assert.ok(game.winner === 1, game.log);
 });
 
@@ -28,5 +28,5 @@ QUnit.test("findBest find the winner when always the same", function( assert ) {
   var s1 = cap('return 41;');
   var s2 = cap('return 42;');
   var result = nrGsr.findBestStrategy(s1, s2, options);
-  assert.ok(result.wins[0] === 0 && result.wins[1] === 0 && result.wins[2] === 1000, result);
+  assert.ok(result.wins[0] === 0 && result.wins[1] === 0 && result.wins[2] === 10000, JSON.stringify(result));
 });

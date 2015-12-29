@@ -2,103 +2,70 @@
 <html>
   <head>
     <title>NrGsr</title>
-    
-    <style type="text/css" media="screen">
-    
-        #editor { 
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-        }
-    </style>
 
-	 <script src="js/angular.min.1-4-1.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.2/ace.js"></script>
-     
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-animate.js"></script>
+
+    <script src="js/ui-bootstrap-tpls-0.14.3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.2/ace.js"></script>
     <script src="engine.js"></script>
-   <script>
-       /*
-        TODO
-        - Handle invalid function
-        - Syntax highlighting
-        - Better display of winner
-        - Cheat sheet for function variables       
-       */
-    var app = angular.module('app', []);
-    app.controller('ctr', function ($scope) {
-        var editor = ace.edit("editor");
-        editor.setTheme("ace/theme/monokai");
-        editor.getSession().setMode("ace/mode/javascript");            
-                
-        if(localStorage.code1) {
-            $scope.code1 = localStorage.code1;
-        } else {
-            $scope.code1 = 'if(!m.lastGuess) { m.lastGuess = 1; } else { m.lastGuess = m.lastGuess + 1; } return m.lastGuess;';
-        }
-        if(localStorage.code2) {
-            $scope.code2 = localStorage.code2;
-        } else {
-            $scope.code2 = 'if(!m.lastGuess) { m.lastGuess = 1000; } else { m.lastGuess = m.lastGuess - 1; } return m.lastGuess;';
-        }
-      
-        $scope.$watch('code1', function () {
-            localStorage.code1 = $scope.code1;
-        });
-        $scope.$watch('code2', function () {
-            localStorage.code2 = $scope.code2;
-        });
-        
-        $scope.strategyFunction = function(nr) {
-            return nrGsr.parseStrategyString($scope.strategyString(nr));
-        }
-      
-        $scope.strategyString = function(nr) {
-            if(nr === 1) {
-                return  nrGsr.createStrategyString($scope.code1);
-            } else {
-                return  nrGsr.createStrategyString($scope.code2);
-            }
-        }
-      
-        $scope.findBest = function () {
-            $scope.result = JSON.stringify(nrGsr.findBestStrategy($scope.strategyFunction(1), $scope.strategyFunction(2)));        
-        }
-        
-        $scope.showSingleGame = function () {
-            var s1 = nrGsr.parseStrategyString(nrGsr.createStrategyString($scope.code1));
-            var s2 = nrGsr.parseStrategyString(nrGsr.createStrategyString($scope.code2));
-            
-            var result = nrGsr.simulateGame(s1, s2, { logEnabled : true });
-            var r = '';
-            for(var i=0; i<result.log.length; i++) {
-            r = r + result.log[i] + '\n';
-            }
-            $scope.result = r;                
-        }
-    });     
-   </script>
+    <script src="ctr.js"></script>
+    
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #e1 {height : 100px; width:100px;}
+    </style>
   </head>
   <body ng-app="app">
-	 <div ng-controller="ctr">
-        <div id="editor">function foo(items) {
-            var x = "All this is syntax highlighted";
-            return x;
-        }</div>         
-     <table>
-      <tr>
-        <td><textarea rows="25" cols="70" placeholder="if(!m.lastGuess) { m.lastGuess = 1; } else { m.lastGuess = m.lastGuess + 1; } return m.lastGuess;//m: storage between guesses, g: opponents guess, r: 0 if first round, 1 if actual > g, -1 if actual < g" ng-model="code1"></textarea></td>
-        <td><textarea rows="25" cols="70" placeholder="if(!m.lastGuess) { m.lastGuess = 1000; } else { m.lastGuess = m.lastGuess - 1; } return m.lastGuess;" ng-model="code2"></textarea></td>
-      </tr>
-      <tr>
-        <td><button ng-click="findBest()">Find best</button></td>
-        <td><button ng-click="showSingleGame()">Show single game</button></td>
-      </tr>
-      <tr>
-        <td colspan="2"><textarea rows="25" cols="140" ng-model="result"></textarea> </td>
-      </tr>            
-     </table>
+	 <div ng-controller="ctr" class="container">
+        <uib-tabset>            
+            <uib-tab select="onSelectTab(1)" heading="{{strats[0].title}}" active="strats[0].active" disable="strats[0].disabled"></uib-tab>
+            <uib-tab select="onSelectTab(2)" heading="{{strats[1].title}}" active="strats[1].active" disable="strats[1].disabled"></uib-tab>
+            <uib-tab select="onSelectTab(3)" heading="Find best">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <p>Click 'fight!' to simluate many matches between the two strategies and find out which one is the best.</p>
+                        <p><a class="btn btn-primary" href="#" role="button" ng-click="fight()" prevent-default>Fight!</a></p>
+                        <table class="table" ng-show="simResult">
+                            <tbody>
+                                <tr ng-repeat="r in simResult.log track by $index">
+                                    <td>{{r}}</td>
+                                </tr>
+                            </tbody>                            
+                        </table>
+                    </div>
+                </div>                
+            </uib-tab>
+        </uib-tabset>
+        <div style="margin-top:10px;width:1000px;height:500px;" ng-hide="tabNr>2">
+            <div style="margin-top:10px;width:600px;height:500px;float:left" id="editor">
+                
+            </div>       
+            <div style="margin-top:10px;width:380px;height:500px;float:left;margin-left:10px;" id="editor">
+                <table class="table">
+                    <tbody>
+                        <tr><td>The function has a single parameter named m with the following content: </td></tr>
+                        <tr><td>- yourGuesses: Your previous guesses and their results (array with items {g, r}) </td></tr>
+                        <tr><td>- opponentsGuesses: Opponents previous guesses and their results (array with items {g, r}) </td></tr>
+                        <tr><td>content of r: 1 => actual > g, -1 => actual < g </td></tr>
+                        <tr><td>content of g: Guessed nr</td></tr>
+                        <tr><td>m can also be used to store state between guesses</td></tr>
+                    </tbody>                            
+                </table>
+                <hr />
+                <div>
+                    <p>Click play to show a game between the two.</p>
+                    <p><a class="btn btn-primary" href="#" role="button" ng-click="simulateGame()" prevent-default>Play</a></p>
+                    <table class="table" ng-show="playResult">
+                        <tbody>
+                            <tr ng-repeat="r in playResult.log track by $index">
+                                <td>{{r}}</td>
+                            </tr>
+                        </tbody>                            
+                    </table>         
+                </div>
+            </div>                    
+        </div>
 	 </div>
   </body>
 </html>
